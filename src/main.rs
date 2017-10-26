@@ -118,7 +118,6 @@ fn bfi_compile(filename: &String) -> Vec<Vec<u32>> {
 	}
 
 	if !loop_stack.is_empty() {
-		println!("{:?}", loop_stack);
 		panic!(format!("{}:{}: missing close delimiter ']'", 
 			filename, loop_stack.pop().unwrap()));
 	}
