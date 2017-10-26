@@ -1,0 +1,9 @@
+[package]
+name = "bfi"
+version = "0.1.0"
+authors = ["Nick Lauri <khoanta.96@gmail.com>"]
+
+[profile.release]
+lto = true
+
+[dependencies]
