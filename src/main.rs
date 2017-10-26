@@ -105,7 +105,6 @@ fn bfi_compile(filename: &String) -> Vec<Vec<u32>> {
 					}
 					
 				},
-
 				_ => {
 					offset -= 1;  // 'offset' will never increase if not bf syntax.
 				}
@@ -170,7 +169,7 @@ fn bfi_exectute(code: Vec<Vec<u32>>, max_pointers: u32)  {
 					};
 					break;
 				}
-			}
+			},
 			_ => {
 				println!("bfi-runtime: invalid opcode {}@{}",
 					code[offset][0], code[offset][1]);
