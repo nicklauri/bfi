@@ -179,10 +179,10 @@ fn bfi_exectute(code: Vec<Vec<u32>>, max_pointers: u32)  {
 }
 
 fn main() {
-	const POINTER_NUMBER: u32 = 30_000;
+	const MAX_POINTERS: u32 = 30_000;
 
 	if let Some(filename) = env::args().nth(1) {
-		bfi_exectute(bfi_compile(&filename), POINTER_NUMBER);
+		bfi_exectute(bfi_compile(&filename), MAX_POINTERS);
 	}
 	else {
 		println!("Br**nfuck Interpreter version 0.1");
