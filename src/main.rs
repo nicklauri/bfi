@@ -1,8 +1,9 @@
 #![allow(unused_assignments)]
 
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 use std::fs::File;
 use std::env;
+use std::iter;
 
 const OP_INCR: u32 = 0;
 const OP_DECR: u32 = 1;
@@ -57,7 +58,6 @@ fn bfi_compile(filename: &String) -> Vec<Vec<u32>> {
 	let mut stacked_char_num: u32 = 1;
 	let mut current_char: char;
 	let mut previous_char: char = '\0';
-	let mut offset: i32 = 0;
 
 	while raw_contents_index <= raw_contents_len {
 		current_char = if raw_contents_index < raw_contents_len
@@ -106,14 +106,10 @@ fn bfi_compile(filename: &String) -> Vec<Vec<u32>> {
 					
 				},
 
-				_ => {
-					offset -= 1;  // 'offset' will never increase if not bf syntax.
-				}
+				_ => {}
 			}
 			stacked_char_num = 1;
 		}
-
-	    offset += 1;
 	    raw_contents_index += 1;
 	    previous_char = current_char;
 	}
@@ -127,11 +123,13 @@ fn bfi_compile(filename: &String) -> Vec<Vec<u32>> {
 	compiled_code
 }
 
-fn bfi_exectute(code: Vec<Vec<u32>>, max_pointers: u32)  {
+fn bfi_exectute(code: Vec<Vec<u32>>, max_pointers: u32) {
 	let mut pointers: Vec<u8> = vec![0; max_pointers as usize];
 	let code_size = code.len();
 	let mut current_cell: usize = 0;
 	let mut offset: usize = 0;
+	let mut _stdout = io::stdout();
+	let mut stdout = _stdout.lock();
 
 	while offset < code_size {
 		match code[offset][0] {
@@ -157,9 +155,9 @@ fn bfi_exectute(code: Vec<Vec<u32>>, max_pointers: u32)  {
 				else {offset = code[offset][1] as usize}
 			},
 			OP_PRNT => {
-				for _ in 0..code[offset][1] {
-					print!("{}", pointers[current_cell] as char)
-				}
+				stdout.write(iter::repeat(pointers[current_cell] as char)
+					.take(code[offset][1] as usize)
+					.collect::<String>().as_bytes()).expect("bfi-runtime: system error");
 			},
 			OP_INPT => {
 				for character in io::stdin().bytes() {
