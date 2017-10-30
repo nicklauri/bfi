@@ -1,4 +1,12 @@
-#![allow(unused_assignments)]
+/**
+ *	Brainfuck Interpreter version 0.1
+ *	
+ *	This version can support all command from brainfuck.
+ *	Any problem, please fork on github/nicklauri/bfi and
+ *	send me pull request. Thank you.	
+ *
+ *	Copyright (c) 2017 by Nick Lauri.
+ */
 
 use std::io::{self, Read, Write};
 use std::fs::File;
@@ -40,17 +48,31 @@ fn bfi_prev_cell(current_cell: u32, step: u32, max_cells: u32) -> u32 {
 	}
 }
 
-fn bfi_compile(filename: &String) -> Vec<Vec<u32>> {
-	let mut filehandle = File::open(filename)
+fn bfi_read_file(filename: String) -> String {
+	let mut filehandle = File::open(&filename)
 				.expect(format!("error: file `{}` not found!\n", filename).as_str());
 	let mut raw_contents = String::new();
-	let mut compiled_code = Vec::<Vec<u32>>::new();
-
 	match filehandle.read_to_string(&mut raw_contents) {
 		Ok(_) => {},
 		Err(e) => panic!(e)
 	}
 
+	raw_contents
+}
+
+fn bfi_read_input() -> String {
+	let mut buffer: String = String::new();
+	let stdin = io::stdin();
+	let mut stdin_handle = stdin.lock();
+
+	match stdin_handle.read_to_string(&mut buffer) {
+		Ok(_) => {},
+		Err(e) => panic!("bfi-preload: Can't read from stdin: {:?}", e)
+	}
+	buffer
+}
+
+fn bfi_compile(raw_contents: String, filename: String) -> Vec<Vec<u32>> {
 	let raw_contents_len: u32 = raw_contents.len() as u32;
 	let raw_contents_slice: Vec<u8> = raw_contents.into();
 	let mut loop_stack = Vec::<u32>::new();
@@ -58,6 +80,7 @@ fn bfi_compile(filename: &String) -> Vec<Vec<u32>> {
 	let mut stacked_char_num: u32 = 1;
 	let mut current_char: char;
 	let mut previous_char: char = '\0';
+	let mut compiled_code = Vec::<Vec<u32>>::new();
 
 	while raw_contents_index <= raw_contents_len {
 		current_char = if raw_contents_index < raw_contents_len
@@ -128,8 +151,9 @@ fn bfi_exectute(code: Vec<Vec<u32>>, max_pointers: u32) {
 	let code_size = code.len();
 	let mut current_cell: usize = 0;
 	let mut offset: usize = 0;
-	let mut _stdout = io::stdout();
-	let mut stdout = _stdout.lock();
+	let _stdout = io::stdout();
+	let mut stdout  = _stdout.lock();
+	let _stdin  = io::stdin();
 
 	while offset < code_size {
 		match code[offset][0] {
@@ -160,13 +184,25 @@ fn bfi_exectute(code: Vec<Vec<u32>>, max_pointers: u32) {
 					.collect::<String>().as_bytes()).expect("bfi-runtime: system error");
 			},
 			OP_INPT => {
-				for character in io::stdin().bytes() {
-					pointers[current_cell] = match character {
-						Ok(c) => c ,
-						Err(e) => 
-							panic!(format!("bfi-runtime: system error {}", e.to_string()))
-					};
-					break;
+				match stdout.flush() {
+					Ok(_) => (),
+					Err(e) => panic!(e)
+				}
+
+				let mut stdin = _stdin.lock();
+				let mut _one_char_slice = [0];
+				match stdin.read_exact(&mut _one_char_slice) {
+					Ok(_) => {
+						if _one_char_slice == [0] {
+							println!("bfi-runtime: input is disabled while using pipe.");
+						}
+
+						pointers[current_cell] = _one_char_slice[0];
+					},
+					Err(e) => {
+						println!("bfi-runtime: the command had comma and passed via pipe?");
+						panic!("bfi-runtime: can't read from stdin: {:?}", e.to_string());
+					}
 				}
 			}
 			_ => {
@@ -178,14 +214,26 @@ fn bfi_exectute(code: Vec<Vec<u32>>, max_pointers: u32) {
 	}
 }
 
+fn help() {
+	println!("Br**nfuck Interpreter version 0.1");
+	println!("usage: {} file.bf", env::args().nth(0).unwrap());
+}
+
 fn main() {
 	const POINTER_NUMBER: u32 = 30_000;
 
 	if let Some(filename) = env::args().nth(1) {
-		bfi_exectute(bfi_compile(&filename), POINTER_NUMBER);
+		bfi_exectute(bfi_compile(bfi_read_file(filename.to_owned()), filename), POINTER_NUMBER);
+	}
+	else if let Some(h) = env::args().nth(1) {
+		if h == "-h" {
+			help();
+		}
+		else {
+			help();
+		}
 	}
 	else {
-		println!("Br**nfuck Interpreter version 0.1");
-		println!("usage: {} file.bf", env::args().nth(0).unwrap());
+		bfi_exectute(bfi_compile(bfi_read_input(), "<stdin>".into()), POINTER_NUMBER);
 	}
 }
