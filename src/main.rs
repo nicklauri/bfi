@@ -128,7 +128,6 @@ fn bfi_compile(raw_contents: String, filename: String) -> Vec<Vec<u32>> {
 					}
 					
 				},
-
 				_ => {}
 			}
 			stacked_char_num = 1;
@@ -204,7 +203,7 @@ fn bfi_exectute(code: Vec<Vec<u32>>, max_pointers: u32) {
 						panic!("bfi-runtime: can't read from stdin: {:?}", e.to_string());
 					}
 				}
-			}
+			},
 			_ => {
 				println!("bfi-runtime: invalid opcode {}@{}",
 					code[offset][0], code[offset][1]);
